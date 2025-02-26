@@ -1,10 +1,11 @@
 
-import { Book, BookOpen, Home, Search, UserCircle } from "lucide-react";
+import { Book, BookOpen, Home, Search, UserCircle, GraduationCap } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 const menuItems = [
   { icon: Home, label: "Home", path: "/" },
   { icon: Book, label: "Lessons", path: "/lessons" },
+  { icon: GraduationCap, label: "Quizzes", path: "/quizzes" },
   { icon: Search, label: "Dictionary", path: "/dictionary" },
   { icon: UserCircle, label: "Profile", path: "/profile" },
 ];

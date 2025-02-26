@@ -6,6 +6,7 @@ import { Layout } from "./components/Layout";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Lessons from "./pages/Lessons";
+import Quizzes from "./pages/Quizzes";
 
 const queryClient = new QueryClient();
 
@@ -16,6 +17,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/lessons/*" element={<Lessons />} />
+          <Route path="/quizzes" element={<Quizzes />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Layout>
