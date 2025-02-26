@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   Tabs,
@@ -87,7 +86,7 @@ const Lessons = () => {
 
   const handleLessonComplete = () => {
     if (lessonViewer.lesson) {
-      toast.success("Lesson completed! Great job!");
+      toast.success("Lesson and quiz completed! Great job!");
       // Here you would typically update the progress in your backend
       setLessonViewer({ isOpen: false });
     }
@@ -155,6 +154,7 @@ const Lessons = () => {
           title={lessonViewer.lesson.title}
           description={lessonViewer.lesson.description}
           videoUrl={lessonViewer.lesson.videoUrl || ""}
+          lessonId={lessonViewer.lesson.id}
           onClose={() => setLessonViewer({ isOpen: false })}
           onComplete={handleLessonComplete}
         />

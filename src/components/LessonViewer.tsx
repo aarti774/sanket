@@ -4,11 +4,15 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
+import { quizzes } from "@/data/quizzes";
+import QuizViewer from "./QuizViewer";
+import { toast } from "sonner";
 
 interface LessonViewerProps {
   title: string;
   description: string;
   videoUrl: string;
+  lessonId: string;
   onClose: () => void;
   onComplete: () => void;
 }
@@ -17,72 +21,95 @@ const LessonViewer = ({
   title,
   description,
   videoUrl,
+  lessonId,
   onClose,
   onComplete,
 }: LessonViewerProps) => {
   const [progress, setProgress] = useState(0);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [videoCompleted, setVideoCompleted] = useState(false);
+
+  const quiz = quizzes.find(q => q.lessonId === lessonId);
 
   const handleVideoTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     const video = e.target as HTMLVideoElement;
     const percentage = (video.currentTime / video.duration) * 100;
     setProgress(percentage);
     
-    // Mark as complete when video is finished
-    if (percentage >= 100) {
-      onComplete();
+    // Mark video as complete when finished
+    if (percentage >= 100 && !videoCompleted) {
+      setVideoCompleted(true);
+      toast.success("Video completed! Ready for the quiz?");
     }
+  };
+
+  const handleQuizComplete = (score: number) => {
+    toast.success(`Quiz completed with score: ${score}%`);
+    setShowQuiz(false);
+    onComplete();
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-4xl bg-white rounded-lg overflow-hidden">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold">{title}</h2>
-            <Button variant="ghost" onClick={onClose}>
-              <ArrowLeft className="mr-2" /> Back to Lessons
-            </Button>
-          </div>
-
-          <div className="space-y-6">
-            <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
-              <video
-                className="w-full h-full"
-                controls
-                onTimeUpdate={handleVideoTimeUpdate}
-                src={videoUrl}
-              >
-                Your browser does not support the video tag.
-              </video>
+      {!showQuiz ? (
+        <Card className="w-full max-w-4xl bg-white rounded-lg overflow-hidden">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold">{title}</h2>
+              <Button variant="ghost" onClick={onClose}>
+                <ArrowLeft className="mr-2" /> Back to Lessons
+              </Button>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm text-gray-600">
-                <span>Progress</span>
-                <span>{Math.round(progress)}%</span>
+            <div className="space-y-6">
+              <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
+                <video
+                  className="w-full h-full"
+                  controls
+                  onTimeUpdate={handleVideoTimeUpdate}
+                  src={videoUrl}
+                >
+                  Your browser does not support the video tag.
+                </video>
               </div>
-              <Progress value={progress} className="h-2" />
-            </div>
 
-            <div className="prose max-w-none">
-              <p className="text-gray-600">{description}</p>
-            </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm text-gray-600">
+                  <span>Video Progress</span>
+                  <span>{Math.round(progress)}%</span>
+                </div>
+                <Progress value={progress} className="h-2" />
+              </div>
 
-            <div className="flex justify-between pt-4">
-              <Button variant="outline" onClick={onClose}>
-                Exit Lesson
-              </Button>
-              <Button
-                onClick={onComplete}
-                disabled={progress < 100}
-                className="bg-primary hover:bg-primary/90"
-              >
-                Complete Lesson <ArrowRight className="ml-2" />
-              </Button>
+              <div className="prose max-w-none">
+                <p className="text-gray-600">{description}</p>
+              </div>
+
+              <div className="flex justify-between pt-4">
+                <Button variant="outline" onClick={onClose}>
+                  Exit Lesson
+                </Button>
+                {quiz && (
+                  <Button
+                    onClick={() => setShowQuiz(true)}
+                    disabled={!videoCompleted}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    Take Quiz <ArrowRight className="ml-2" />
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      ) : quiz ? (
+        <QuizViewer
+          quiz={quiz}
+          videoUrl={videoUrl}
+          onClose={() => setShowQuiz(false)}
+          onComplete={handleQuizComplete}
+        />
+      ) : null}
     </div>
   );
 };
