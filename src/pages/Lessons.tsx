@@ -11,6 +11,18 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { alphabet, numbers, commonPhrases } from "@/data/lessons";
 import { Play, Lock } from "lucide-react";
+import LessonViewer from "@/components/LessonViewer";
+import { toast } from "sonner";
+
+interface LessonViewerState {
+  isOpen: boolean;
+  lesson?: {
+    id: string;
+    title: string;
+    description: string;
+    videoUrl?: string;
+  };
+}
 
 const LessonCard = ({
   title,
@@ -53,10 +65,32 @@ const LessonCard = ({
 
 const Lessons = () => {
   const [activeTab, setActiveTab] = useState("alphabet");
+  const [lessonViewer, setLessonViewer] = useState<LessonViewerState>({
+    isOpen: false,
+  });
 
-  const handleLessonClick = (lessonId: string) => {
-    // This will be implemented when we add the lesson viewer
-    console.log("Opening lesson:", lessonId);
+  const handleLessonClick = (lesson: {
+    id: string;
+    title: string;
+    description: string;
+    videoUrl?: string;
+  }) => {
+    if (!lesson.videoUrl) {
+      toast.error("Video not available for this lesson");
+      return;
+    }
+    setLessonViewer({
+      isOpen: true,
+      lesson,
+    });
+  };
+
+  const handleLessonComplete = () => {
+    if (lessonViewer.lesson) {
+      toast.success("Lesson completed! Great job!");
+      // Here you would typically update the progress in your backend
+      setLessonViewer({ isOpen: false });
+    }
   };
 
   return (
@@ -78,8 +112,8 @@ const Lessons = () => {
                 title={lesson.title}
                 description={lesson.description}
                 progress={lesson.progress}
-                isLocked={index > 0} // First lesson is unlocked
-                onClick={() => handleLessonClick(lesson.id)}
+                isLocked={index > 0}
+                onClick={() => handleLessonClick(lesson)}
               />
             ))}
           </div>
@@ -94,7 +128,7 @@ const Lessons = () => {
                 description={lesson.description}
                 progress={lesson.progress}
                 isLocked={index > 0}
-                onClick={() => handleLessonClick(lesson.id)}
+                onClick={() => handleLessonClick(lesson)}
               />
             ))}
           </div>
@@ -109,12 +143,22 @@ const Lessons = () => {
                 description={lesson.description}
                 progress={lesson.progress}
                 isLocked={index > 0}
-                onClick={() => handleLessonClick(lesson.id)}
+                onClick={() => handleLessonClick(lesson)}
               />
             ))}
           </div>
         </TabsContent>
       </Tabs>
+
+      {lessonViewer.isOpen && lessonViewer.lesson && (
+        <LessonViewer
+          title={lessonViewer.lesson.title}
+          description={lessonViewer.lesson.description}
+          videoUrl={lessonViewer.lesson.videoUrl || ""}
+          onClose={() => setLessonViewer({ isOpen: false })}
+          onComplete={handleLessonComplete}
+        />
+      )}
     </div>
   );
 };
