@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Layout } from "./components/Layout";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import Lessons from "./pages/Lessons";
 
 const queryClient = new QueryClient();
 
@@ -14,6 +15,7 @@ const App = () => (
       <Layout>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/lessons/*" element={<Lessons />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Layout>
