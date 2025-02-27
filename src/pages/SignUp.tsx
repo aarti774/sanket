@@ -7,9 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { BookOpen, Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const SignUp = () => {
   const navigate = useNavigate();
+  const { signUp } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -57,14 +59,25 @@ const SignUp = () => {
     setIsLoading(true);
     
     try {
-      // Simulate account creation (replace with actual registration logic)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const { error, data } = await signUp(
+        formData.email, 
+        formData.password, 
+        {
+          full_name: formData.name,
+          mobile: formData.mobile
+        }
+      );
+      
+      if (error) {
+        toast.error(error.message || "Failed to create account");
+        return;
+      }
       
       // Success
-      toast.success("Account created successfully");
+      toast.success("Account created successfully! Please check your email to confirm your account.");
       navigate("/signin");
-    } catch (error) {
-      toast.error("Failed to create account. Please try again.");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create account. Please try again.");
     } finally {
       setIsLoading(false);
     }

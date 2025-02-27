@@ -1,6 +1,7 @@
 
-import { Book, BookOpen, Home, Search, UserCircle, GraduationCap, LogIn } from "lucide-react";
+import { Book, BookOpen, Home, Search, UserCircle, GraduationCap, LogIn, LogOut } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const menuItems = [
   { icon: Home, label: "Home", path: "/" },
@@ -18,6 +19,7 @@ export const Sidebar = ({
   onClose: () => void;
 }) => {
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   return (
     <div
@@ -50,14 +52,27 @@ export const Sidebar = ({
           ))}
         </nav>
         <div className="p-4 border-t border-gray-200">
-          <Link
-            to="/signin"
-            className="flex items-center px-4 py-3 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-            onClick={() => onClose()}
-          >
-            <LogIn className="h-5 w-5 mr-3" />
-            Sign In / Sign Up
-          </Link>
+          {user ? (
+            <button
+              className="flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+              onClick={async () => {
+                await signOut();
+                onClose();
+              }}
+            >
+              <LogOut className="h-5 w-5 mr-3" />
+              Sign Out
+            </button>
+          ) : (
+            <Link
+              to="/signin"
+              className="flex items-center px-4 py-3 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+              onClick={() => onClose()}
+            >
+              <LogIn className="h-5 w-5 mr-3" />
+              Sign In / Sign Up
+            </Link>
+          )}
         </div>
       </div>
     </div>

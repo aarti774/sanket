@@ -7,9 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { BookOpen } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const { signIn } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -33,14 +35,18 @@ const SignIn = () => {
     setIsLoading(true);
     
     try {
-      // Simulate authentication (replace with actual auth logic)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { error } = await signIn(formData.email, formData.password);
+      
+      if (error) {
+        toast.error(error.message || "Failed to sign in");
+        return;
+      }
       
       // Success
       toast.success("Signed in successfully");
       navigate("/");
-    } catch (error) {
-      toast.error("Failed to sign in. Please check your credentials.");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to sign in. Please check your credentials.");
     } finally {
       setIsLoading(false);
     }
