@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Lessons from "./pages/Lessons";
 import Quizzes from "./pages/Quizzes";
+import Dictionary from "./pages/Dictionary";
 
 const queryClient = new QueryClient();
 
@@ -18,6 +19,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/lessons/*" element={<Lessons />} />
           <Route path="/quizzes" element={<Quizzes />} />
+          <Route path="/dictionary" element={<Dictionary />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Layout>
