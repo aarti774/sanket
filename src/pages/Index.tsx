@@ -2,6 +2,7 @@
 import { ArrowRight, Award, BookOpen, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Link } from "react-router-dom";
 
 const features = [
   {
@@ -33,14 +34,16 @@ const Index = () => {
           Begin your journey to learn sign language with our interactive lessons,
           quizzes, and video demonstrations.
         </p>
-        <Button className="bg-primary hover:bg-primary/90" size="lg">
-          Start Learning <ArrowRight className="ml-2" />
-        </Button>
+        <Link to="/lessons">
+          <Button className="bg-primary hover:bg-primary/90" size="lg">
+            Start Learning <ArrowRight className="ml-2" />
+          </Button>
+        </Link>
       </section>
 
-      <section className="grid md:grid-cols-3 gap-6">
+      <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {features.map((feature) => (
-          <Card key={feature.title} className="p-6 hover:shadow-lg transition-shadow">
+          <Card key={feature.title} className="p-6 hover:shadow-lg transition-shadow transform hover:-translate-y-1 duration-300">
             <feature.icon className="h-12 w-12 text-primary mb-4" />
             <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
             <p className="text-gray-600">{feature.description}</p>
@@ -53,9 +56,11 @@ const Index = () => {
         <p className="text-gray-600 mb-6">
           Join thousands of learners mastering sign language with Sanket.
         </p>
-        <Button variant="outline">
-          Explore Lessons <ArrowRight className="ml-2" />
-        </Button>
+        <Link to="/lessons">
+          <Button variant="outline">
+            Explore Lessons <ArrowRight className="ml-2" />
+          </Button>
+        </Link>
       </section>
     </div>
   );

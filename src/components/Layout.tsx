@@ -1,7 +1,8 @@
 
 import { useState } from "react";
-import { MenuIcon, X } from "lucide-react";
+import { MenuIcon, X, BookOpen } from "lucide-react";
 import { Sidebar } from "./Sidebar";
+import { Link } from "react-router-dom";
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -17,6 +18,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
                   className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                  aria-label="Toggle sidebar menu"
                 >
                   {sidebarOpen ? (
                     <X className="block h-6 w-6" />
@@ -25,7 +27,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                   )}
                 </button>
                 <div className="flex-1 flex justify-center px-2 lg:ml-6 lg:justify-end">
-                  <h1 className="text-2xl font-bold text-primary">Sanket</h1>
+                  <Link to="/" className="flex items-center">
+                    <BookOpen className="h-6 w-6 text-primary mr-2" />
+                    <h1 className="text-2xl font-bold text-primary">Sanket</h1>
+                  </Link>
                 </div>
               </div>
             </div>

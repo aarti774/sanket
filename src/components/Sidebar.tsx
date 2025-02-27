@@ -27,7 +27,10 @@ export const Sidebar = ({
     >
       <div className="h-full flex flex-col">
         <div className="h-16 flex items-center justify-center border-b border-gray-200">
-          <BookOpen className="h-8 w-8 text-primary" />
+          <div className="flex items-center">
+            <BookOpen className="h-8 w-8 text-primary" />
+            <span className="ml-2 text-xl font-bold text-primary">Sanket</span>
+          </div>
         </div>
         <nav className="flex-1 px-4 space-y-1 py-4">
           {menuItems.map((item) => (
