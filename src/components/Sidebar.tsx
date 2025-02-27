@@ -1,5 +1,5 @@
 
-import { Book, BookOpen, Home, Search, UserCircle, GraduationCap } from "lucide-react";
+import { Book, BookOpen, Home, Search, UserCircle, GraduationCap, LogIn } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 const menuItems = [
@@ -49,6 +49,16 @@ export const Sidebar = ({
             </Link>
           ))}
         </nav>
+        <div className="p-4 border-t border-gray-200">
+          <Link
+            to="/signin"
+            className="flex items-center px-4 py-3 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+            onClick={() => onClose()}
+          >
+            <LogIn className="h-5 w-5 mr-3" />
+            Sign In / Sign Up
+          </Link>
+        </div>
       </div>
     </div>
   );
