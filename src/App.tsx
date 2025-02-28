@@ -1,5 +1,5 @@
 
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { Layout } from "./components/Layout";
@@ -12,26 +12,97 @@ import Profile from "./pages/Profile";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import { AuthProvider } from "./contexts/AuthContext";
+import { useAuth } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
+
+// Protected route component
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+  
+  if (!user) {
+    return <Navigate to="/signin" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
+// Public route that redirects if already authenticated
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+  
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
+const AppRoutes = () => {
+  return (
+    <Routes>
+      {/* Public routes - accessible without authentication */}
+      <Route path="/signin" element={
+        <PublicRoute>
+          <SignIn />
+        </PublicRoute>
+      } />
+      <Route path="/signup" element={
+        <PublicRoute>
+          <SignUp />
+        </PublicRoute>
+      } />
+      
+      {/* Protected routes - require authentication */}
+      <Route path="/" element={
+        <ProtectedRoute>
+          <Layout><Index /></Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/lessons/*" element={
+        <ProtectedRoute>
+          <Layout><Lessons /></Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/quizzes" element={
+        <ProtectedRoute>
+          <Layout><Quizzes /></Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/dictionary" element={
+        <ProtectedRoute>
+          <Layout><Dictionary /></Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <Layout><Profile /></Layout>
+        </ProtectedRoute>
+      } />
+      
+      {/* Fallback route */}
+      <Route path="*" element={
+        <ProtectedRoute>
+          <Layout><NotFound /></Layout>
+        </ProtectedRoute>
+      } />
+    </Routes>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          {/* Auth routes without Layout */}
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
-          
-          {/* Routes with Layout */}
-          <Route path="/" element={<Layout><Index /></Layout>} />
-          <Route path="/lessons/*" element={<Layout><Lessons /></Layout>} />
-          <Route path="/quizzes" element={<Layout><Quizzes /></Layout>} />
-          <Route path="/dictionary" element={<Layout><Dictionary /></Layout>} />
-          <Route path="/profile" element={<Layout><Profile /></Layout>} />
-          <Route path="*" element={<Layout><NotFound /></Layout>} />
-        </Routes>
+        <AppRoutes />
         <Toaster />
       </AuthProvider>
     </BrowserRouter>

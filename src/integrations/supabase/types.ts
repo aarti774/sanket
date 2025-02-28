@@ -9,18 +9,96 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      signin: {
+      certificates: {
         Row: {
-          password: string
-          username: string
+          "certificate-id": number
+          "certificate-name": string
         }
         Insert: {
-          password: string
-          username: string
+          "certificate-id"?: number
+          "certificate-name": string
         }
         Update: {
-          password?: string
-          username?: string
+          "certificate-id"?: number
+          "certificate-name"?: string
+        }
+        Relationships: []
+      }
+      lessons: {
+        Row: {
+          content: string | null
+          "lesson-id": number
+          "lesson-name": string
+          "video-URL": string | null
+        }
+        Insert: {
+          content?: string | null
+          "lesson-id"?: number
+          "lesson-name"?: string
+          "video-URL"?: string | null
+        }
+        Update: {
+          content?: string | null
+          "lesson-id"?: number
+          "lesson-name"?: string
+          "video-URL"?: string | null
+        }
+        Relationships: []
+      }
+      quiz: {
+        Row: {
+          questions: string | null
+          "quiz-id": number
+          "quiz-name": string
+          score: number | null
+        }
+        Insert: {
+          questions?: string | null
+          "quiz-id"?: number
+          "quiz-name": string
+          score?: number | null
+        }
+        Update: {
+          questions?: string | null
+          "quiz-id"?: number
+          "quiz-name"?: string
+          score?: number | null
+        }
+        Relationships: []
+      }
+      signin: {
+        Row: {
+          password: string | null
+          userid: number
+        }
+        Insert: {
+          password?: string | null
+          userid: number
+        }
+        Update: {
+          password?: string | null
+          userid?: number
+        }
+        Relationships: []
+      }
+      user: {
+        Row: {
+          email: string
+          name: string | null
+          password: string | null
+          "user-id": number
+        }
+        Insert: {
+          email?: string
+          name?: string | null
+          password?: string | null
+          "user-id"?: number
+        }
+        Update: {
+          email?: string
+          name?: string | null
+          password?: string | null
+          "user-id"?: number
         }
         Relationships: []
       }
