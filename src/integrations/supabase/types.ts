@@ -34,7 +34,7 @@ export type Database = {
         Insert: {
           content?: string | null
           "lesson-id"?: number
-          "lesson-name"?: string
+          "lesson-name": string
           "video-URL"?: string | null
         }
         Update: {
