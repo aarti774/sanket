@@ -1,16 +1,17 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { LogOut, Mail, Phone, User, Settings, Award, ChartBar, FileText, Lock } from "lucide-react";
+import { LogOut, Mail, Phone, User, Settings, Award, ChartBar, FileText, Lock, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { alphabet, numbers, commonPhrases } from "@/data/lessons";
 import { quizzes } from "@/data/quizzes";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 const Profile = () => {
   const { user, signOut } = useAuth();
@@ -23,6 +24,7 @@ const Profile = () => {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
+  const certificateRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const allLessons = [...alphabet, ...numbers, ...commonPhrases];
   const completedLessons = allLessons.filter(lesson => lesson.progress > 0);
@@ -30,11 +32,31 @@ const Profile = () => {
     ? Math.round((completedLessons.length / allLessons.length) * 100) 
     : 0;
 
-  // Mock certificates data
   const certificates = [
-    { id: "cert-1", name: "Alphabet Master", date: "2023-05-15", progress: 100 },
-    { id: "cert-2", name: "Numbers Proficient", date: "2023-06-22", progress: 75 },
-    { id: "cert-3", name: "Conversational Basics", date: "2023-07-10", progress: 40 },
+    { 
+      id: "cert-1", 
+      name: "Alphabet Master", 
+      date: "2023-05-15", 
+      progress: 100,
+      achievements: ["Mastered all 26 alphabet signs", "Achieved perfect score in alphabet quiz"],
+      remarks: "Excellent understanding of hand positions and finger movements"
+    },
+    { 
+      id: "cert-2", 
+      name: "Numbers Proficient", 
+      date: "2023-06-22", 
+      progress: 75,
+      achievements: ["Completed 8/10 number lessons", "Successfully recognized complex number combinations"],
+      remarks: "Good progress, needs practice with numbers 7-10"
+    },
+    { 
+      id: "cert-3", 
+      name: "Conversational Basics", 
+      date: "2023-07-10", 
+      progress: 40,
+      achievements: ["Learned 15 common phrases", "Can introduce yourself in sign language"],
+      remarks: "Making steady progress, continue practicing daily"
+    },
   ];
 
   useEffect(() => {
@@ -62,19 +84,56 @@ const Profile = () => {
   };
 
   const handleSavePersonalInfo = () => {
-    // Here you would update the user's information in Supabase
     toast.success("Personal information updated successfully");
     setIsEditing(false);
   };
 
   const handleChangePassword = () => {
-    // Here you would implement password change logic
     toast.success("Password reset email sent");
   };
 
   const handleDeleteAccount = () => {
-    // Here you would implement account deletion logic
     toast.error("Account deletion is disabled in this demo");
+  };
+
+  const handleDownloadCertificate = async (certId: string) => {
+    const certificateElement = certificateRefs.current[certId];
+    if (!certificateElement) {
+      toast.error("Certificate element not found");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const canvas = await html2canvas(certificateElement, {
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        backgroundColor: "#ffffff"
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      
+      const cert = certificates.find(c => c.id === certId);
+      pdf.save(`${personalInfo.fullName.replace(/\s+/g, '_')}_${cert?.name.replace(/\s+/g, '_')}.pdf`);
+      
+      toast.success("Certificate downloaded successfully");
+    } catch (error) {
+      toast.error("Failed to download certificate");
+      console.error("Certificate download error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!user) {
@@ -135,7 +194,6 @@ const Profile = () => {
           </TabsTrigger>
         </TabsList>
         
-        {/* Personal Information Tab */}
         <TabsContent value="personal">
           <Card className="shadow-md">
             <CardHeader>
@@ -234,7 +292,6 @@ const Profile = () => {
           </Card>
         </TabsContent>
         
-        {/* Progress Tab */}
         <TabsContent value="progress">
           <Card className="shadow-md">
             <CardHeader>
@@ -333,7 +390,6 @@ const Profile = () => {
           </Card>
         </TabsContent>
         
-        {/* Certificates Tab */}
         <TabsContent value="certificates">
           <Card className="shadow-md">
             <CardHeader>
@@ -343,49 +399,112 @@ const Profile = () => {
             <CardContent>
               <div className="space-y-6">
                 {certificates.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-8">
                     {certificates.map((cert) => (
-                      <div key={cert.id} className="border rounded-lg p-4 hover:border-primary transition-colors">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-3">
-                            <Award className="h-10 w-10 text-primary" />
-                            <div>
-                              <h3 className="font-medium">{cert.name}</h3>
-                              <p className="text-sm text-gray-500">Issued on {new Date(cert.date).toLocaleDateString()}</p>
+                      <div key={cert.id}>
+                        <div className="border rounded-lg p-4 hover:border-primary transition-colors mb-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-3">
+                              <Award className="h-10 w-10 text-primary" />
+                              <div>
+                                <h3 className="font-medium">{cert.name}</h3>
+                                <p className="text-sm text-gray-500">Issued on {new Date(cert.date).toLocaleDateString()}</p>
+                              </div>
+                            </div>
+                            {cert.progress < 100 ? (
+                              <span className="text-sm bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                                In Progress
+                              </span>
+                            ) : (
+                              <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                Completed
+                              </span>
+                            )}
+                          </div>
+                          
+                          <div className="mt-3 space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span>Progress</span>
+                              <span>{cert.progress}%</span>
+                            </div>
+                            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-primary" 
+                                style={{ width: `${cert.progress}%` }}
+                              ></div>
                             </div>
                           </div>
-                          {cert.progress < 100 ? (
-                            <span className="text-sm bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                              In Progress
-                            </span>
-                          ) : (
-                            <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                              Completed
-                            </span>
+                          
+                          <div className="mt-4 space-y-2">
+                            <h4 className="text-sm font-medium">Achievements:</h4>
+                            <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                              {cert.achievements.map((achievement, idx) => (
+                                <li key={idx}>{achievement}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          
+                          <div className="mt-4">
+                            <h4 className="text-sm font-medium">Instructor Remarks:</h4>
+                            <p className="text-sm text-gray-600 italic mt-1">{cert.remarks}</p>
+                          </div>
+                          
+                          {cert.progress === 100 && (
+                            <div className="mt-4">
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="w-full flex items-center justify-center gap-2"
+                                onClick={() => handleDownloadCertificate(cert.id)}
+                                disabled={isLoading}
+                              >
+                                <Download size={16} />
+                                Download Certificate
+                              </Button>
+                            </div>
                           )}
                         </div>
                         
-                        <div className="mt-3 space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span>Progress</span>
-                            <span>{cert.progress}%</span>
-                          </div>
-                          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-primary" 
-                              style={{ width: `${cert.progress}%` }}
-                            ></div>
+                        <div 
+                          ref={el => certificateRefs.current[cert.id] = el} 
+                          className="hidden p-8 bg-white border border-gray-200 rounded-lg" 
+                          style={{ width: '800px', height: '600px' }}
+                        >
+                          <div className="w-full h-full flex flex-col items-center justify-between p-6 border-8 border-double border-primary/20">
+                            <div className="text-center w-full">
+                              <h2 className="text-3xl font-bold text-primary mb-1">Certificate of Achievement</h2>
+                              <h3 className="text-xl font-semibold mb-6">{cert.name}</h3>
+                              <div className="flex justify-center mb-6">
+                                <Award className="h-20 w-20 text-primary" />
+                              </div>
+                              <p className="text-lg mb-2">This certifies that</p>
+                              <h2 className="text-2xl font-bold mb-2">{personalInfo.fullName || userMetadata.full_name || user.email}</h2>
+                              <p className="text-lg">has successfully completed the {cert.name} course</p>
+                              <p className="text-lg mt-4">with the following achievements:</p>
+                              <ul className="my-4 inline-block text-left">
+                                {cert.achievements.map((achievement, idx) => (
+                                  <li key={idx} className="text-base mb-1">• {achievement}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            
+                            <div className="mt-8 w-full">
+                              <div className="grid grid-cols-2 gap-8">
+                                <div className="text-center">
+                                  <div className="border-t border-gray-400 pt-2 mx-auto w-40">
+                                    <p className="text-sm">Date: {new Date(cert.date).toLocaleDateString()}</p>
+                                  </div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="border-t border-gray-400 pt-2 mx-auto w-40">
+                                    <p className="text-sm">Instructor Signature</p>
+                                  </div>
+                                </div>
+                              </div>
+                              <p className="text-sm text-center mt-6 text-gray-500">Sanket - Sign Language Learning Platform</p>
+                            </div>
                           </div>
                         </div>
-                        
-                        {cert.progress === 100 && (
-                          <div className="mt-4">
-                            <Button size="sm" variant="outline" className="w-full flex items-center justify-center gap-2">
-                              <FileText size={16} />
-                              Download Certificate
-                            </Button>
-                          </div>
-                        )}
                       </div>
                     ))}
                   </div>
@@ -401,7 +520,6 @@ const Profile = () => {
           </Card>
         </TabsContent>
         
-        {/* Settings Tab */}
         <TabsContent value="settings">
           <Card className="shadow-md">
             <CardHeader>
