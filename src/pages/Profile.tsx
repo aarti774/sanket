@@ -1,17 +1,20 @@
-import { useState, useEffect, useRef } from "react";
+
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { LogOut, Mail, Phone, User, Settings, Award, ChartBar, FileText, Lock, Download } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { LogOut } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { alphabet, numbers, commonPhrases } from "@/data/lessons";
 import { quizzes } from "@/data/quizzes";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import { User, ChartBar, Award, Settings } from "lucide-react";
+
+// Import our new components
+import PersonalInfoTab from "@/components/profile/PersonalInfoTab";
+import ProgressTab from "@/components/profile/ProgressTab";
+import CertificatesTab from "@/components/profile/CertificatesTab";
+import SettingsTab from "@/components/profile/SettingsTab";
 
 const Profile = () => {
   const { user, signOut } = useAuth();
@@ -22,15 +25,7 @@ const Profile = () => {
     email: "",
     mobile: "",
   });
-  const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
-  const certificateRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-
-  const allLessons = [...alphabet, ...numbers, ...commonPhrases];
-  const completedLessons = allLessons.filter(lesson => lesson.progress > 0);
-  const totalProgress = allLessons.length > 0 
-    ? Math.round((completedLessons.length / allLessons.length) * 100) 
-    : 0;
 
   const certificates = [
     { 
@@ -78,59 +73,6 @@ const Profile = () => {
       toast.success("Signed out successfully");
     } catch (error) {
       toast.error("Failed to sign out");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSavePersonalInfo = () => {
-    toast.success("Personal information updated successfully");
-    setIsEditing(false);
-  };
-
-  const handleChangePassword = () => {
-    toast.success("Password reset email sent");
-  };
-
-  const handleDeleteAccount = () => {
-    toast.error("Account deletion is disabled in this demo");
-  };
-
-  const handleDownloadCertificate = async (certId: string) => {
-    const certificateElement = certificateRefs.current[certId];
-    if (!certificateElement) {
-      toast.error("Certificate element not found");
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const canvas = await html2canvas(certificateElement, {
-        scale: 2,
-        logging: false,
-        useCORS: true,
-        backgroundColor: "#ffffff"
-      });
-      
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a4'
-      });
-      
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      
-      const cert = certificates.find(c => c.id === certId);
-      pdf.save(`${personalInfo.fullName.replace(/\s+/g, '_')}_${cert?.name.replace(/\s+/g, '_')}.pdf`);
-      
-      toast.success("Certificate downloaded successfully");
-    } catch (error) {
-      toast.error("Failed to download certificate");
-      console.error("Certificate download error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -195,395 +137,36 @@ const Profile = () => {
         </TabsList>
         
         <TabsContent value="personal">
-          <Card className="shadow-md">
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>Personal Information</CardTitle>
-                  <CardDescription>Manage your personal details</CardDescription>
-                </div>
-                <Button
-                  onClick={() => setIsEditing(!isEditing)}
-                  variant="outline"
-                >
-                  {isEditing ? "Cancel" : "Edit"}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {isEditing ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="fullName">Full Name</Label>
-                        <Input
-                          id="fullName"
-                          value={personalInfo.fullName}
-                          onChange={(e) => setPersonalInfo({...personalInfo, fullName: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email Address</Label>
-                        <Input
-                          id="email"
-                          value={personalInfo.email}
-                          disabled
-                        />
-                        <p className="text-xs text-gray-500">Email cannot be changed</p>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="mobile">Mobile Number</Label>
-                        <Input
-                          id="mobile"
-                          value={personalInfo.mobile}
-                          onChange={(e) => setPersonalInfo({...personalInfo, mobile: e.target.value})}
-                        />
-                      </div>
-                    </div>
-                    <Button onClick={handleSavePersonalInfo}>Save Changes</Button>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    <div className="flex flex-col md:flex-row gap-6">
-                      <div className="flex-1 space-y-4">
-                        <div className="border rounded-lg p-4">
-                          <h3 className="font-medium flex items-center gap-2 mb-3">
-                            <User className="h-4 w-4" />
-                            Full Name
-                          </h3>
-                          <p className="text-gray-600">{personalInfo.fullName || "Not provided"}</p>
-                        </div>
-                      </div>
-                      <div className="flex-1 space-y-4">
-                        <div className="border rounded-lg p-4">
-                          <h3 className="font-medium flex items-center gap-2 mb-3">
-                            <Mail className="h-4 w-4" />
-                            Email Address
-                          </h3>
-                          <p className="text-gray-600">{personalInfo.email}</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col md:flex-row gap-6">
-                      <div className="flex-1 space-y-4">
-                        <div className="border rounded-lg p-4">
-                          <h3 className="font-medium flex items-center gap-2 mb-3">
-                            <Phone className="h-4 w-4" />
-                            Mobile Number
-                          </h3>
-                          <p className="text-gray-600">{personalInfo.mobile || "Not provided"}</p>
-                        </div>
-                      </div>
-                      <div className="flex-1 space-y-4">
-                        <div className="border rounded-lg p-4">
-                          <h3 className="font-medium flex items-center gap-2 mb-3">
-                            <User className="h-4 w-4" />
-                            Account ID
-                          </h3>
-                          <p className="text-gray-600 truncate">{user.id}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <PersonalInfoTab 
+            user={user}
+            userMetadata={userMetadata}
+            personalInfo={personalInfo}
+            setPersonalInfo={setPersonalInfo}
+          />
         </TabsContent>
         
         <TabsContent value="progress">
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle>Learning Progress</CardTitle>
-              <CardDescription>Track your journey in learning sign language</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm font-medium">Overall Progress</span>
-                    <span className="text-sm font-medium">{totalProgress}%</span>
-                  </div>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-primary" 
-                      style={{ width: `${totalProgress}%` }}
-                    ></div>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Lesson Categories</h3>
-                  
-                  <div className="space-y-4">
-                    <div className="border rounded-lg p-4">
-                      <h4 className="font-medium mb-2">Alphabet</h4>
-                      <div className="space-y-3">
-                        <div className="flex justify-between text-sm">
-                          <span>Completed</span>
-                          <span>{alphabet.filter(l => l.progress > 0).length} of {alphabet.length}</span>
-                        </div>
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-primary" 
-                            style={{ width: `${alphabet.length > 0 ? (alphabet.filter(l => l.progress > 0).length / alphabet.length) * 100 : 0}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="border rounded-lg p-4">
-                      <h4 className="font-medium mb-2">Numbers</h4>
-                      <div className="space-y-3">
-                        <div className="flex justify-between text-sm">
-                          <span>Completed</span>
-                          <span>{numbers.filter(l => l.progress > 0).length} of {numbers.length}</span>
-                        </div>
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-primary" 
-                            style={{ width: `${numbers.length > 0 ? (numbers.filter(l => l.progress > 0).length / numbers.length) * 100 : 0}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="border rounded-lg p-4">
-                      <h4 className="font-medium mb-2">Common Phrases</h4>
-                      <div className="space-y-3">
-                        <div className="flex justify-between text-sm">
-                          <span>Completed</span>
-                          <span>{commonPhrases.filter(l => l.progress > 0).length} of {commonPhrases.length}</span>
-                        </div>
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-primary" 
-                            style={{ width: `${commonPhrases.length > 0 ? (commonPhrases.filter(l => l.progress > 0).length / commonPhrases.length) * 100 : 0}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Quiz Performance</h3>
-                  <div className="border rounded-lg p-4">
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-sm">
-                        <span>Quizzes Completed</span>
-                        <span>0 of {quizzes.length}</span>
-                      </div>
-                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-primary" 
-                          style={{ width: "0%" }}
-                        ></div>
-                      </div>
-                      <p className="text-sm text-gray-500 mt-2">Complete quizzes to track your performance</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <ProgressTab 
+            alphabet={alphabet}
+            numbers={numbers}
+            commonPhrases={commonPhrases}
+            quizzes={quizzes}
+          />
         </TabsContent>
         
         <TabsContent value="certificates">
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle>Certificates</CardTitle>
-              <CardDescription>Your achievements and certifications</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {certificates.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-8">
-                    {certificates.map((cert) => (
-                      <div key={cert.id}>
-                        <div className="border rounded-lg p-4 hover:border-primary transition-colors mb-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-3">
-                              <Award className="h-10 w-10 text-primary" />
-                              <div>
-                                <h3 className="font-medium">{cert.name}</h3>
-                                <p className="text-sm text-gray-500">Issued on {new Date(cert.date).toLocaleDateString()}</p>
-                              </div>
-                            </div>
-                            {cert.progress < 100 ? (
-                              <span className="text-sm bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                                In Progress
-                              </span>
-                            ) : (
-                              <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                                Completed
-                              </span>
-                            )}
-                          </div>
-                          
-                          <div className="mt-3 space-y-2">
-                            <div className="flex justify-between text-sm">
-                              <span>Progress</span>
-                              <span>{cert.progress}%</span>
-                            </div>
-                            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-primary" 
-                                style={{ width: `${cert.progress}%` }}
-                              ></div>
-                            </div>
-                          </div>
-                          
-                          <div className="mt-4 space-y-2">
-                            <h4 className="text-sm font-medium">Achievements:</h4>
-                            <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                              {cert.achievements.map((achievement, idx) => (
-                                <li key={idx}>{achievement}</li>
-                              ))}
-                            </ul>
-                          </div>
-                          
-                          <div className="mt-4">
-                            <h4 className="text-sm font-medium">Instructor Remarks:</h4>
-                            <p className="text-sm text-gray-600 italic mt-1">{cert.remarks}</p>
-                          </div>
-                          
-                          {cert.progress === 100 && (
-                            <div className="mt-4">
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                className="w-full flex items-center justify-center gap-2"
-                                onClick={() => handleDownloadCertificate(cert.id)}
-                                disabled={isLoading}
-                              >
-                                <Download size={16} />
-                                Download Certificate
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div 
-                          ref={el => certificateRefs.current[cert.id] = el} 
-                          className="hidden p-8 bg-white border border-gray-200 rounded-lg" 
-                          style={{ width: '800px', height: '600px' }}
-                        >
-                          <div className="w-full h-full flex flex-col items-center justify-between p-6 border-8 border-double border-primary/20">
-                            <div className="text-center w-full">
-                              <h2 className="text-3xl font-bold text-primary mb-1">Certificate of Achievement</h2>
-                              <h3 className="text-xl font-semibold mb-6">{cert.name}</h3>
-                              <div className="flex justify-center mb-6">
-                                <Award className="h-20 w-20 text-primary" />
-                              </div>
-                              <p className="text-lg mb-2">This certifies that</p>
-                              <h2 className="text-2xl font-bold mb-2">{personalInfo.fullName || userMetadata.full_name || user.email}</h2>
-                              <p className="text-lg">has successfully completed the {cert.name} course</p>
-                              <p className="text-lg mt-4">with the following achievements:</p>
-                              <ul className="my-4 inline-block text-left">
-                                {cert.achievements.map((achievement, idx) => (
-                                  <li key={idx} className="text-base mb-1">• {achievement}</li>
-                                ))}
-                              </ul>
-                            </div>
-                            
-                            <div className="mt-8 w-full">
-                              <div className="grid grid-cols-2 gap-8">
-                                <div className="text-center">
-                                  <div className="border-t border-gray-400 pt-2 mx-auto w-40">
-                                    <p className="text-sm">Date: {new Date(cert.date).toLocaleDateString()}</p>
-                                  </div>
-                                </div>
-                                <div className="text-center">
-                                  <div className="border-t border-gray-400 pt-2 mx-auto w-40">
-                                    <p className="text-sm">Instructor Signature</p>
-                                  </div>
-                                </div>
-                              </div>
-                              <p className="text-sm text-center mt-6 text-gray-500">Sanket - Sign Language Learning Platform</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Award className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-                    <h3 className="text-xl font-medium mb-2">No Certificates Yet</h3>
-                    <p className="text-gray-500">Complete courses to earn certificates</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <CertificatesTab 
+            certificates={certificates}
+            personalInfo={personalInfo}
+            user={user}
+            userMetadata={userMetadata}
+            isLoading={isLoading}
+            setIsLoading={setIsLoading}
+          />
         </TabsContent>
         
         <TabsContent value="settings">
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle>Account Settings</CardTitle>
-              <CardDescription>Manage your account preferences and security</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="border rounded-lg p-6">
-                  <h3 className="text-lg font-medium flex items-center gap-2 mb-4">
-                    <Lock className="h-5 w-5" />
-                    Security Settings
-                  </h3>
-                  
-                  <div className="space-y-6">
-                    <div className="space-y-2">
-                      <h4 className="font-medium">Password</h4>
-                      <p className="text-sm text-gray-500">Last changed: Never</p>
-                      <Button 
-                        variant="outline" 
-                        onClick={handleChangePassword}
-                        className="mt-2"
-                      >
-                        Change Password
-                      </Button>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <h4 className="font-medium">Email Verification</h4>
-                      <div className="flex items-center space-x-2">
-                        <div className={`h-2 w-2 rounded-full ${user.email_confirmed_at ? "bg-green-500" : "bg-red-500"}`}></div>
-                        <p className="text-sm">
-                          {user.email_confirmed_at ? "Verified" : "Not verified"}
-                        </p>
-                      </div>
-                      {!user.email_confirmed_at && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="mt-2"
-                        >
-                          Resend Verification Email
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="border rounded-lg p-6 border-red-200">
-                  <h3 className="text-lg font-medium text-red-600 mb-2">Danger Zone</h3>
-                  <p className="text-sm text-gray-500 mb-4">
-                    The actions below will permanently affect your account
-                  </p>
-                  
-                  <Button 
-                    variant="destructive" 
-                    onClick={handleDeleteAccount}
-                  >
-                    Delete Account
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <SettingsTab user={user} />
         </TabsContent>
       </Tabs>
     </div>
