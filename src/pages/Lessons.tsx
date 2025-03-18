@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import {
   Tabs,
   TabsContent,
@@ -9,9 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { alphabet, numbers, commonPhrases } from "@/data/lessons";
-import { Play, Lock } from "lucide-react";
+import { Play } from "lucide-react";
 import LessonViewer from "@/components/LessonViewer";
 import { toast } from "sonner";
+import { quizzes } from "@/data/quizzes";
+import QuizViewer from "@/components/QuizViewer";
 
 interface LessonViewerState {
   isOpen: boolean;
@@ -23,28 +26,28 @@ interface LessonViewerState {
   };
 }
 
+interface QuizViewerState {
+  isOpen: boolean;
+  quiz?: any;
+  videoUrl?: string;
+}
+
 const LessonCard = ({
   title,
   description,
   progress,
-  isLocked,
   onClick,
 }: {
   title: string;
   description: string;
   progress: number;
-  isLocked: boolean;
   onClick: () => void;
 }) => (
   <Card className="group hover:shadow-lg transition-all">
     <CardHeader className="space-y-1">
       <div className="flex items-center justify-between">
         <CardTitle className="text-lg">{title}</CardTitle>
-        {isLocked ? (
-          <Lock className="h-5 w-5 text-gray-400" />
-        ) : (
-          <Play className="h-5 w-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-        )}
+        <Play className="h-5 w-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
       <Progress value={progress} className="h-2" />
     </CardHeader>
@@ -52,11 +55,9 @@ const LessonCard = ({
       <p className="text-sm text-gray-600">{description}</p>
       <Button
         className="w-full mt-4"
-        variant={isLocked ? "outline" : "default"}
-        disabled={isLocked}
         onClick={onClick}
       >
-        {isLocked ? "Locked" : "Continue Learning"}
+        Continue Learning
       </Button>
     </CardContent>
   </Card>
@@ -65,6 +66,9 @@ const LessonCard = ({
 const Lessons = () => {
   const [activeTab, setActiveTab] = useState("alphabet");
   const [lessonViewer, setLessonViewer] = useState<LessonViewerState>({
+    isOpen: false,
+  });
+  const [quizViewer, setQuizViewer] = useState<QuizViewerState>({
     isOpen: false,
   });
 
@@ -86,10 +90,30 @@ const Lessons = () => {
 
   const handleLessonComplete = () => {
     if (lessonViewer.lesson) {
-      toast.success("Lesson and quiz completed! Great job!");
-      // Here you would typically update the progress in your backend
-      setLessonViewer({ isOpen: false });
+      toast.success("Lesson completed! Now take the quiz!");
+      
+      // Find a quiz for this lesson
+      const matchingQuiz = quizzes.find(quiz => quiz.lessonId === lessonViewer.lesson?.id);
+      
+      if (matchingQuiz) {
+        // Open the quiz
+        setLessonViewer({ isOpen: false });
+        setQuizViewer({
+          isOpen: true,
+          quiz: matchingQuiz,
+          videoUrl: lessonViewer.lesson.videoUrl
+        });
+      } else {
+        // No quiz available for this lesson
+        toast.info("No quiz available for this lesson yet");
+        setLessonViewer({ isOpen: false });
+      }
     }
+  };
+
+  const handleQuizComplete = (score: number) => {
+    toast.success(`Quiz completed with score: ${score}%`);
+    setQuizViewer({ isOpen: false });
   };
 
   return (
@@ -105,13 +129,12 @@ const Lessons = () => {
 
         <TabsContent value="alphabet" className="mt-0">
           <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {alphabet.map((lesson, index) => (
+            {alphabet.map((lesson) => (
               <LessonCard
                 key={lesson.id}
                 title={lesson.title}
                 description={lesson.description}
                 progress={lesson.progress}
-                isLocked={index > 0}
                 onClick={() => handleLessonClick(lesson)}
               />
             ))}
@@ -120,13 +143,12 @@ const Lessons = () => {
 
         <TabsContent value="numbers" className="mt-0">
           <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {numbers.map((lesson, index) => (
+            {numbers.map((lesson) => (
               <LessonCard
                 key={lesson.id}
                 title={lesson.title}
                 description={lesson.description}
                 progress={lesson.progress}
-                isLocked={index > 0}
                 onClick={() => handleLessonClick(lesson)}
               />
             ))}
@@ -135,13 +157,12 @@ const Lessons = () => {
 
         <TabsContent value="phrases" className="mt-0">
           <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {commonPhrases.map((lesson, index) => (
+            {commonPhrases.map((lesson) => (
               <LessonCard
                 key={lesson.id}
                 title={lesson.title}
                 description={lesson.description}
                 progress={lesson.progress}
-                isLocked={index > 0}
                 onClick={() => handleLessonClick(lesson)}
               />
             ))}
@@ -157,6 +178,15 @@ const Lessons = () => {
           lessonId={lessonViewer.lesson.id}
           onClose={() => setLessonViewer({ isOpen: false })}
           onComplete={handleLessonComplete}
+        />
+      )}
+
+      {quizViewer.isOpen && quizViewer.quiz && (
+        <QuizViewer
+          quiz={quizViewer.quiz}
+          videoUrl={quizViewer.videoUrl}
+          onClose={() => setQuizViewer({ isOpen: false })}
+          onComplete={handleQuizComplete}
         />
       )}
     </div>

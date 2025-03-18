@@ -29,18 +29,21 @@ export type Database = {
           content: string | null
           "lesson-id": number
           "lesson-name": string
+          "user-id": number
           "video-URL": string | null
         }
         Insert: {
           content?: string | null
           "lesson-id"?: number
           "lesson-name": string
+          "user-id": number
           "video-URL"?: string | null
         }
         Update: {
           content?: string | null
           "lesson-id"?: number
           "lesson-name"?: string
+          "user-id"?: number
           "video-URL"?: string | null
         }
         Relationships: []
@@ -89,7 +92,7 @@ export type Database = {
           "user-id": number
         }
         Insert: {
-          email?: string
+          email: string
           name?: string | null
           password?: string | null
           "user-id"?: number
@@ -100,7 +103,15 @@ export type Database = {
           password?: string | null
           "user-id"?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_user-id_fkey"
+            columns: ["user-id"]
+            isOneToOne: true
+            referencedRelation: "lessons"
+            referencedColumns: ["user-id"]
+          },
+        ]
       }
     }
     Views: {
