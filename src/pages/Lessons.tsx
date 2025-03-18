@@ -10,11 +10,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { alphabet, numbers, commonPhrases } from "@/data/lessons";
-import { Play } from "lucide-react";
+import { Play, Shield } from "lucide-react";
 import LessonViewer from "@/components/LessonViewer";
 import { toast } from "sonner";
 import { quizzes } from "@/data/quizzes";
 import QuizViewer from "@/components/QuizViewer";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface LessonViewerState {
   isOpen: boolean;
@@ -71,6 +73,8 @@ const Lessons = () => {
   const [quizViewer, setQuizViewer] = useState<QuizViewerState>({
     isOpen: false,
   });
+  const { isAdmin } = useAuth();
+  const navigate = useNavigate();
 
   const handleLessonClick = (lesson: {
     id: string;
@@ -118,7 +122,20 @@ const Lessons = () => {
 
   return (
     <div className="max-w-5xl mx-auto animate-fade-in">
-      <h1 className="text-3xl font-bold mb-6">Sign Language Lessons</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Sign Language Lessons</h1>
+        
+        {isAdmin && (
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2"
+            onClick={() => navigate('/admin')}
+          >
+            <Shield className="h-4 w-4" />
+            Admin
+          </Button>
+        )}
+      </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3 mb-8">
