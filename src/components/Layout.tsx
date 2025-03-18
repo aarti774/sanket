@@ -1,11 +1,14 @@
 
 import { useState } from "react";
-import { MenuIcon, X, BookOpen } from "lucide-react";
+import { MenuIcon, X, BookOpen, UserCog } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isAdmin } = useAuth();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -32,6 +35,16 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                     <h1 className="text-2xl font-bold text-primary">Sanket</h1>
                   </Link>
                 </div>
+                {isAdmin && (
+                  <div className="ml-4">
+                    <Link to="/admin">
+                      <Button variant="outline" size="sm" className="flex items-center gap-2">
+                        <UserCog size={16} />
+                        Admin
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           </nav>
