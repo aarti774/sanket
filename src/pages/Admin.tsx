@@ -73,19 +73,26 @@ const AdminDashboard = () => {
         throw profilesError;
       }
 
+      if (!profiles) {
+        throw new Error('No profiles found');
+      }
+
       // Then get all auth users to merge the data
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
 
       if (authError) {
         throw authError;
       }
 
-      // Combine the data
+      // Ensure authUsers is defined and has the users property
+      const authUsers = authData && 'users' in authData ? authData.users : [];
+
+      // Combine the data with proper type checking
       const combinedUsers = profiles.map(profile => {
-        const authUser = authUsers.users.find(u => u.id === profile.id);
+        const authUser = authUsers.find(u => u.id === profile.id);
         return {
           ...profile,
-          user_metadata: authUser?.user_metadata
+          user_metadata: authUser?.user_metadata || {}
         };
       });
 
