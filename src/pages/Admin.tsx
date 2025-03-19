@@ -36,7 +36,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, UserCog, Activity, Info } from "lucide-react";
+import { Users, UserCog, Activity, Info, BarChart2, Clock, BookOpen, FileText } from "lucide-react";
 
 type ProfileType = {
   id: string;
@@ -48,16 +48,34 @@ type ProfileType = {
   };
 };
 
+type UserActivityType = {
+  id: string;
+  user_id: string;
+  activity_type: string;
+  activity_details: any;
+  created_at: string;
+  user_email?: string;
+};
+
 const AdminDashboard = () => {
   const { user, isAdmin } = useAuth();
   const [users, setUsers] = useState<ProfileType[]>([]);
+  const [activities, setActivities] = useState<UserActivityType[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<ProfileType | null>(null);
   const [activeTab, setActiveTab] = useState("users");
+  const [activityFilters, setActivityFilters] = useState<{
+    type: string | null;
+    userId: string | null;
+  }>({
+    type: null,
+    userId: null,
+  });
 
   useEffect(() => {
     if (isAdmin) {
       fetchUsers();
+      fetchActivities();
     }
   }, [isAdmin]);
 
@@ -105,6 +123,55 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchActivities = async () => {
+    setLoading(true);
+    try {
+      let query = supabase
+        .from('user_activity')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (activityFilters.type) {
+        query = query.eq('activity_type', activityFilters.type);
+      }
+      
+      if (activityFilters.userId) {
+        query = query.eq('user_id', activityFilters.userId);
+      }
+      
+      const { data, error } = await query;
+
+      if (error) {
+        throw error;
+      }
+
+      // Get user emails to display instead of IDs
+      if (data) {
+        const activitiesWithEmails = await Promise.all(
+          data.map(async (activity) => {
+            const { data: userData } = await supabase
+              .from('profiles')
+              .select('email')
+              .eq('id', activity.user_id)
+              .single();
+            
+            return {
+              ...activity,
+              user_email: userData?.email || 'Unknown'
+            };
+          })
+        );
+        
+        setActivities(activitiesWithEmails);
+      }
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+      toast.error('Failed to fetch user activities');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const toggleAdminStatus = async (userId: string, currentStatus: boolean) => {
     try {
       const { error } = await supabase
@@ -125,6 +192,58 @@ const AdminDashboard = () => {
       console.error('Error toggling admin status:', error);
       toast.error('Failed to update admin status');
     }
+  };
+
+  const clearActivityFilters = () => {
+    setActivityFilters({
+      type: null,
+      userId: null
+    });
+    
+    fetchActivities();
+  };
+
+  const filterByType = (type: string) => {
+    setActivityFilters(prev => ({
+      ...prev,
+      type
+    }));
+  };
+
+  const filterByUser = (userId: string) => {
+    setActivityFilters(prev => ({
+      ...prev,
+      userId
+    }));
+  };
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetchActivities();
+    }
+  }, [activityFilters]);
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'user_login':
+        return <UserCog size={16} className="text-green-500" />;
+      case 'user_logout':
+        return <UserCog size={16} className="text-red-500" />;
+      case 'lesson_view':
+        return <BookOpen size={16} className="text-blue-500" />;
+      case 'quiz_attempt':
+        return <FileText size={16} className="text-yellow-500" />;
+      case 'quiz_completion':
+        return <BarChart2 size={16} className="text-purple-500" />;
+      default:
+        return <Activity size={16} />;
+    }
+  };
+
+  const formatActivityType = (type: string) => {
+    return type.split('_').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
   };
 
   if (!isAdmin) {
@@ -153,7 +272,7 @@ const AdminDashboard = () => {
           </TabsTrigger>
           <TabsTrigger value="activity" className="flex items-center gap-2">
             <Activity size={16} />
-            <span>Activity</span>
+            <span>User Activity</span>
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center gap-2">
             <UserCog size={16} />
@@ -247,6 +366,18 @@ const AdminDashboard = () => {
                                       {selectedUser.is_admin ? 'Yes' : 'No'}
                                     </div>
                                   </div>
+                                  <div className="pt-4">
+                                    <Button 
+                                      variant="outline"
+                                      onClick={() => {
+                                        filterByUser(selectedUser.id);
+                                        setActiveTab('activity');
+                                      }}
+                                      className="w-full"
+                                    >
+                                      View User Activity
+                                    </Button>
+                                  </div>
                                 </div>
                                 <DialogFooter>
                                   <DialogClose asChild>
@@ -269,16 +400,145 @@ const AdminDashboard = () => {
         <TabsContent value="activity">
           <Card>
             <CardHeader>
-              <CardTitle>User Activity</CardTitle>
-              <CardDescription>
-                Track user engagement and system activity.
-              </CardDescription>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle>User Activity</CardTitle>
+                  <CardDescription>
+                    Track user engagement and system activity.
+                  </CardDescription>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {activityFilters.type || activityFilters.userId ? (
+                    <Button variant="outline" size="sm" onClick={clearActivityFilters}>
+                      Clear Filters
+                    </Button>
+                  ) : null}
+                  <Button size="sm" onClick={() => fetchActivities()}>
+                    Refresh
+                  </Button>
+                </div>
+              </div>
+              {(activityFilters.type || activityFilters.userId) && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {activityFilters.type && (
+                    <div className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
+                      Type: {formatActivityType(activityFilters.type)}
+                    </div>
+                  )}
+                  {activityFilters.userId && (
+                    <div className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
+                      User: {users.find(u => u.id === activityFilters.userId)?.email || activityFilters.userId}
+                    </div>
+                  )}
+                </div>
+              )}
             </CardHeader>
             <CardContent>
-              <div className="py-8 text-center">
-                <p className="mb-4">Activity tracking is under development.</p>
-                <Button variant="outline">Explore Analytics</Button>
-              </div>
+              {loading ? (
+                <div className="py-8 text-center">Loading activity data...</div>
+              ) : activities.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Time</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>User</TableHead>
+                      <TableHead>Details</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {activities.map((activity) => (
+                      <TableRow key={activity.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Clock size={16} className="text-muted-foreground" />
+                            {new Date(activity.created_at).toLocaleString()}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {getActivityIcon(activity.activity_type)}
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="px-2 h-6 text-xs"
+                              onClick={() => filterByType(activity.activity_type)}
+                            >
+                              {formatActivityType(activity.activity_type)}
+                            </Button>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="px-2 h-6 text-xs"
+                            onClick={() => filterByUser(activity.user_id)}
+                          >
+                            {activity.user_email}
+                          </Button>
+                        </TableCell>
+                        <TableCell>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                View Details
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-md">
+                              <DialogHeader>
+                                <DialogTitle>Activity Details</DialogTitle>
+                                <DialogDescription>
+                                  Complete information about this activity
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4 py-4">
+                                <div className="grid grid-cols-3 gap-4">
+                                  <div className="font-medium">Type:</div>
+                                  <div className="col-span-2 flex items-center gap-2">
+                                    {getActivityIcon(activity.activity_type)}
+                                    {formatActivityType(activity.activity_type)}
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-3 gap-4">
+                                  <div className="font-medium">User:</div>
+                                  <div className="col-span-2">{activity.user_email}</div>
+                                </div>
+                                <div className="grid grid-cols-3 gap-4">
+                                  <div className="font-medium">Time:</div>
+                                  <div className="col-span-2">{new Date(activity.created_at).toLocaleString()}</div>
+                                </div>
+                                {activity.activity_details && (
+                                  <div>
+                                    <div className="font-medium mb-2">Details:</div>
+                                    <div className="bg-muted p-3 rounded-md overflow-auto max-h-48">
+                                      <pre className="text-xs">{JSON.stringify(activity.activity_details, null, 2)}</pre>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                              <DialogFooter>
+                                <DialogClose asChild>
+                                  <Button>Close</Button>
+                                </DialogClose>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="py-8 text-center">
+                  <p className="mb-4">No activity data found.</p>
+                  {(activityFilters.type || activityFilters.userId) && (
+                    <Button variant="outline" onClick={clearActivityFilters}>
+                      Clear Filters
+                    </Button>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

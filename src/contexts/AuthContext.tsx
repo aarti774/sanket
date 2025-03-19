@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { logUserActivity } from '@/utils/activity-logger';
 
 type AuthContextType = {
   session: Session | null;
@@ -56,12 +57,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) {
-        checkAdminStatus();
+      
+      if (_event === 'SIGNED_IN' && session?.user) {
+        await checkAdminStatus();
+        // Log user login activity
+        await logUserActivity('user_login', { 
+          email: session.user.email,
+          timestamp: new Date().toISOString()
+        });
       }
+      
+      if (_event === 'SIGNED_OUT') {
+        setIsAdmin(false);
+      }
+      
       setLoading(false);
     });
 
@@ -88,6 +100,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    // Log user logout
+    if (user) {
+      await logUserActivity('user_logout', {
+        email: user.email,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
     await supabase.auth.signOut();
     setIsAdmin(false);
     navigate('/signin');

@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from "sonner";
 import { BookOpen } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -17,16 +16,11 @@ const SignIn = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    role: "user", // Default role is user
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleRoleChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, role: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,7 +43,7 @@ const SignIn = () => {
       }
       
       // Success
-      toast.success(`Signed in successfully as ${formData.role}`);
+      toast.success("Signed in successfully");
       navigate("/");
     } catch (error: any) {
       toast.error(error.message || "Failed to sign in. Please check your credentials.");
@@ -108,18 +102,6 @@ const SignIn = () => {
                   onChange={handleChange}
                   required
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
-                <Select value={formData.role} onValueChange={handleRoleChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user">User</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
               <Button 
                 type="submit" 

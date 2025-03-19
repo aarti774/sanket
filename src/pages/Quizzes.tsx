@@ -7,6 +7,7 @@ import { Play } from "lucide-react";
 import { quizzes } from "@/data/quizzes";
 import QuizViewer from "@/components/QuizViewer";
 import { toast } from "sonner";
+import { logUserActivity } from "@/utils/activity-logger";
 
 const Quizzes = () => {
   const [selectedQuiz, setSelectedQuiz] = useState<{
@@ -16,9 +17,28 @@ const Quizzes = () => {
     isOpen: false,
   });
 
-  const handleQuizComplete = (score: number) => {
+  const handleQuizComplete = async (score: number) => {
+    if (selectedQuiz.quiz) {
+      await logUserActivity('quiz_completion', {
+        quiz_id: selectedQuiz.quiz.id,
+        quiz_title: selectedQuiz.quiz.title,
+        score: score,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
     toast.success(`Quiz completed with score: ${score}%`);
     setSelectedQuiz({ isOpen: false });
+  };
+
+  const handleStartQuiz = async (quiz: typeof quizzes[0]) => {
+    await logUserActivity('quiz_attempt', {
+      quiz_id: quiz.id,
+      quiz_title: quiz.title,
+      timestamp: new Date().toISOString()
+    });
+    
+    setSelectedQuiz({ isOpen: true, quiz });
   };
 
   return (
@@ -42,7 +62,7 @@ const Quizzes = () => {
               </p>
               <Button
                 className="w-full"
-                onClick={() => setSelectedQuiz({ isOpen: true, quiz })}
+                onClick={() => handleStartQuiz(quiz)}
               >
                 Start Quiz
               </Button>

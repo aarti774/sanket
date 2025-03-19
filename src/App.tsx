@@ -13,6 +13,8 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import { AuthProvider } from "./contexts/AuthContext";
 import { useAuth } from "./contexts/AuthContext";
+import { RequireAdmin } from "./components/RequireAdmin";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -86,6 +88,11 @@ const AppRoutes = () => {
         <ProtectedRoute>
           <Layout><Profile /></Layout>
         </ProtectedRoute>
+      } />
+      <Route path="/admin" element={
+        <RequireAdmin>
+          <Layout><Admin /></Layout>
+        </RequireAdmin>
       } />
       
       {/* Fallback route */}

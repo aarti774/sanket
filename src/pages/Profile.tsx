@@ -85,13 +85,11 @@ const Profile = () => {
         <TabsList className="grid grid-cols-2 gap-2">
           <TabsTrigger value="personal" className="flex items-center gap-2">
             <User size={16} />
-            <span className="hidden md:inline">Personal Info</span>
-            <span className="md:hidden">Info</span>
+            Personal Info
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center gap-2">
             <Settings size={16} />
-            <span className="hidden md:inline">Settings</span>
-            <span className="md:hidden">Settings</span>
+            Settings
           </TabsTrigger>
         </TabsList>
         

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   Tabs,
@@ -17,6 +16,7 @@ import { quizzes } from "@/data/quizzes";
 import QuizViewer from "@/components/QuizViewer";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { logUserActivity } from "@/utils/activity-logger";
 
 interface LessonViewerState {
   isOpen: boolean;
@@ -67,16 +67,28 @@ const LessonCard = ({
 
 const Lessons = () => {
   const [activeTab, setActiveTab] = useState("alphabet");
-  const [lessonViewer, setLessonViewer] = useState<LessonViewerState>({
+  const [lessonViewer, setLessonViewer] = useState<{
+    isOpen: boolean;
+    lesson?: {
+      id: string;
+      title: string;
+      description: string;
+      videoUrl?: string;
+    };
+  }>({
     isOpen: false,
   });
-  const [quizViewer, setQuizViewer] = useState<QuizViewerState>({
+  const [quizViewer, setQuizViewer] = useState<{
+    isOpen: boolean;
+    quiz?: any;
+    videoUrl?: string;
+  }>({
     isOpen: false,
   });
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
 
-  const handleLessonClick = (lesson: {
+  const handleLessonClick = async (lesson: {
     id: string;
     title: string;
     description: string;
@@ -86,6 +98,14 @@ const Lessons = () => {
       toast.error("Video not available for this lesson");
       return;
     }
+    
+    // Log lesson view activity
+    await logUserActivity('lesson_view', {
+      lesson_id: lesson.id,
+      lesson_title: lesson.title,
+      timestamp: new Date().toISOString()
+    });
+    
     setLessonViewer({
       isOpen: true,
       lesson,
@@ -115,7 +135,17 @@ const Lessons = () => {
     }
   };
 
-  const handleQuizComplete = (score: number) => {
+  const handleQuizComplete = async (score: number) => {
+    if (quizViewer.quiz) {
+      // Log quiz completion activity
+      await logUserActivity('quiz_completion', {
+        quiz_id: quizViewer.quiz.id,
+        quiz_title: quizViewer.quiz.title,
+        score: score,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
     toast.success(`Quiz completed with score: ${score}%`);
     setQuizViewer({ isOpen: false });
   };
