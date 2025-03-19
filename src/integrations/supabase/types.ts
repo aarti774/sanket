@@ -15,6 +15,7 @@ export type Database = {
           id: string | null
           "lesson-id": string
           "lesson-name": string
+          user_id: string | null
           "video-URL": string | null
         }
         Insert: {
@@ -22,6 +23,7 @@ export type Database = {
           id?: string | null
           "lesson-id"?: string
           "lesson-name": string
+          user_id?: string | null
           "video-URL"?: string | null
         }
         Update: {
@@ -29,6 +31,7 @@ export type Database = {
           id?: string | null
           "lesson-id"?: string
           "lesson-name"?: string
+          user_id?: string | null
           "video-URL"?: string | null
         }
         Relationships: []
@@ -61,6 +64,7 @@ export type Database = {
           "quiz-id": number
           "quiz-name": string
           score: number | null
+          user_id: string | null
         }
         Insert: {
           id: string
@@ -68,6 +72,7 @@ export type Database = {
           "quiz-id"?: number
           "quiz-name": string
           score?: number | null
+          user_id?: string | null
         }
         Update: {
           id?: string
@@ -75,6 +80,7 @@ export type Database = {
           "quiz-id"?: number
           "quiz-name"?: string
           score?: number | null
+          user_id?: string | null
         }
         Relationships: [
           {

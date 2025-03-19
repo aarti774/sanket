@@ -14,6 +14,18 @@ export interface ActivityDetails {
 }
 
 /**
+ * Gets the current authenticated user
+ */
+export const getCurrentUser = async () => {
+  const { data, error } = await supabase.auth.getUser();
+  if (error) {
+    console.error('Error getting current user:', error);
+    return null;
+  }
+  return data.user;
+};
+
+/**
  * Logs user activity to the database
  */
 export const logUserActivity = async (

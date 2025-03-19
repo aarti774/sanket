@@ -16,34 +16,21 @@ import { quizzes } from "@/data/quizzes";
 import QuizViewer from "@/components/QuizViewer";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { logUserActivity } from "@/utils/activity-logger";
+import { logUserActivity, getCurrentUser } from "@/utils/activity-logger";
+import { supabase } from "@/integrations/supabase/client";
 
-interface LessonViewerState {
-  isOpen: boolean;
-  lesson?: {
-    id: string;
-    title: string;
-    description: string;
-    videoUrl?: string;
-  };
-}
-
-interface QuizViewerState {
-  isOpen: boolean;
-  quiz?: any;
-  videoUrl?: string;
-}
-
-const LessonCard = ({
-  title,
-  description,
-  progress,
-  onClick,
-}: {
+interface LessonCardProps {
   title: string;
   description: string;
   progress: number;
   onClick: () => void;
+}
+
+const LessonCard: React.FC<LessonCardProps> = ({
+  title,
+  description,
+  progress,
+  onClick,
 }) => (
   <Card className="group hover:shadow-lg transition-all">
     <CardHeader className="space-y-1">
@@ -85,7 +72,7 @@ const Lessons = () => {
   }>({
     isOpen: false,
   });
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const navigate = useNavigate();
 
   const handleLessonClick = async (lesson: {
@@ -99,12 +86,37 @@ const Lessons = () => {
       return;
     }
     
+    if (!user) {
+      toast.error("You must be logged in to view lessons");
+      navigate('/signin');
+      return;
+    }
+    
     // Log lesson view activity
     await logUserActivity('lesson_view', {
       lesson_id: lesson.id,
       lesson_title: lesson.title,
       timestamp: new Date().toISOString()
     });
+    
+    // Save lesson to the database
+    try {
+      const { error } = await supabase
+        .from('lessons')
+        .upsert({
+          'lesson-id': lesson.id,
+          'lesson-name': lesson.title,
+          'content': lesson.description,
+          'video-URL': lesson.videoUrl,
+          'user_id': user.id
+        });
+        
+      if (error) {
+        console.error('Error saving lesson:', error);
+      }
+    } catch (error) {
+      console.error('Failed to save lesson:', error);
+    }
     
     setLessonViewer({
       isOpen: true,
@@ -136,7 +148,7 @@ const Lessons = () => {
   };
 
   const handleQuizComplete = async (score: number) => {
-    if (quizViewer.quiz) {
+    if (quizViewer.quiz && user) {
       // Log quiz completion activity
       await logUserActivity('quiz_completion', {
         quiz_id: quizViewer.quiz.id,
@@ -144,6 +156,26 @@ const Lessons = () => {
         score: score,
         timestamp: new Date().toISOString()
       });
+      
+      // Save quiz result to the database
+      try {
+        const { error } = await supabase
+          .from('quiz')
+          .upsert({
+            id: user.id,
+            'quiz-id': parseInt(quizViewer.quiz.id),
+            'quiz-name': quizViewer.quiz.title,
+            'score': score,
+            'questions': JSON.stringify(quizViewer.quiz.questions),
+            'user_id': user.id
+          });
+          
+        if (error) {
+          console.error('Error saving quiz result:', error);
+        }
+      } catch (error) {
+        console.error('Failed to save quiz result:', error);
+      }
     }
     
     toast.success(`Quiz completed with score: ${score}%`);

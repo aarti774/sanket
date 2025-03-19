@@ -8,6 +8,9 @@ import { quizzes } from "@/data/quizzes";
 import QuizViewer from "@/components/QuizViewer";
 import { toast } from "sonner";
 import { logUserActivity } from "@/utils/activity-logger";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Quizzes = () => {
   const [selectedQuiz, setSelectedQuiz] = useState<{
@@ -16,15 +19,39 @@ const Quizzes = () => {
   }>({
     isOpen: false,
   });
+  
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const handleQuizComplete = async (score: number) => {
-    if (selectedQuiz.quiz) {
+    if (selectedQuiz.quiz && user) {
+      // Log quiz completion activity
       await logUserActivity('quiz_completion', {
         quiz_id: selectedQuiz.quiz.id,
         quiz_title: selectedQuiz.quiz.title,
         score: score,
         timestamp: new Date().toISOString()
       });
+      
+      // Save quiz result to the database
+      try {
+        const { error } = await supabase
+          .from('quiz')
+          .upsert({
+            id: user.id,
+            'quiz-id': parseInt(selectedQuiz.quiz.id),
+            'quiz-name': selectedQuiz.quiz.title,
+            'score': score,
+            'questions': JSON.stringify(selectedQuiz.quiz.questions),
+            'user_id': user.id
+          });
+          
+        if (error) {
+          console.error('Error saving quiz result:', error);
+        }
+      } catch (error) {
+        console.error('Failed to save quiz result:', error);
+      }
     }
     
     toast.success(`Quiz completed with score: ${score}%`);
@@ -32,6 +59,12 @@ const Quizzes = () => {
   };
 
   const handleStartQuiz = async (quiz: typeof quizzes[0]) => {
+    if (!user) {
+      toast.error("You must be logged in to take quizzes");
+      navigate('/signin');
+      return;
+    }
+    
     await logUserActivity('quiz_attempt', {
       quiz_id: quiz.id,
       quiz_title: quiz.title,
