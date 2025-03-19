@@ -6,7 +6,8 @@ export type ActivityType =
   | 'user_logout' 
   | 'lesson_view' 
   | 'quiz_attempt' 
-  | 'quiz_completion';
+  | 'quiz_completion'
+  | 'role_change';
 
 export interface ActivityDetails {
   [key: string]: any;
