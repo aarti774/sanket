@@ -9,21 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      certificates: {
-        Row: {
-          "certificate-id": number
-          "certificate-name": string
-        }
-        Insert: {
-          "certificate-id"?: number
-          "certificate-name": string
-        }
-        Update: {
-          "certificate-id"?: number
-          "certificate-name"?: string
-        }
-        Relationships: []
-      }
       lessons: {
         Row: {
           content: string | null

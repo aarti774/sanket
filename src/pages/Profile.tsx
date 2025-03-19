@@ -6,14 +6,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { LogOut } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { alphabet, numbers, commonPhrases } from "@/data/lessons";
-import { quizzes } from "@/data/quizzes";
-import { User, ChartBar, Award, Settings } from "lucide-react";
+import { User, Settings } from "lucide-react";
 
-// Import our new components
+// Import our components
 import PersonalInfoTab from "@/components/profile/PersonalInfoTab";
-import ProgressTab from "@/components/profile/ProgressTab";
-import CertificatesTab from "@/components/profile/CertificatesTab";
 import SettingsTab from "@/components/profile/SettingsTab";
 
 const Profile = () => {
@@ -26,33 +22,6 @@ const Profile = () => {
     mobile: "",
   });
   const [activeTab, setActiveTab] = useState("personal");
-
-  const certificates = [
-    { 
-      id: "cert-1", 
-      name: "Alphabet Master", 
-      date: "2023-05-15", 
-      progress: 100,
-      achievements: ["Mastered all 26 alphabet signs", "Achieved perfect score in alphabet quiz"],
-      remarks: "Excellent understanding of hand positions and finger movements"
-    },
-    { 
-      id: "cert-2", 
-      name: "Numbers Proficient", 
-      date: "2023-06-22", 
-      progress: 75,
-      achievements: ["Completed 8/10 number lessons", "Successfully recognized complex number combinations"],
-      remarks: "Good progress, needs practice with numbers 7-10"
-    },
-    { 
-      id: "cert-3", 
-      name: "Conversational Basics", 
-      date: "2023-07-10", 
-      progress: 40,
-      achievements: ["Learned 15 common phrases", "Can introduce yourself in sign language"],
-      remarks: "Making steady progress, continue practicing daily"
-    },
-  ];
 
   useEffect(() => {
     if (user) {
@@ -113,21 +82,11 @@ const Profile = () => {
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <TabsList className="grid grid-cols-2 gap-2">
           <TabsTrigger value="personal" className="flex items-center gap-2">
             <User size={16} />
             <span className="hidden md:inline">Personal Info</span>
             <span className="md:hidden">Info</span>
-          </TabsTrigger>
-          <TabsTrigger value="progress" className="flex items-center gap-2">
-            <ChartBar size={16} />
-            <span className="hidden md:inline">Progress</span>
-            <span className="md:hidden">Progress</span>
-          </TabsTrigger>
-          <TabsTrigger value="certificates" className="flex items-center gap-2">
-            <Award size={16} />
-            <span className="hidden md:inline">Certificates</span>
-            <span className="md:hidden">Certs</span>
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center gap-2">
             <Settings size={16} />
@@ -142,26 +101,6 @@ const Profile = () => {
             userMetadata={userMetadata}
             personalInfo={personalInfo}
             setPersonalInfo={setPersonalInfo}
-          />
-        </TabsContent>
-        
-        <TabsContent value="progress">
-          <ProgressTab 
-            alphabet={alphabet}
-            numbers={numbers}
-            commonPhrases={commonPhrases}
-            quizzes={quizzes}
-          />
-        </TabsContent>
-        
-        <TabsContent value="certificates">
-          <CertificatesTab 
-            certificates={certificates}
-            personalInfo={personalInfo}
-            user={user}
-            userMetadata={userMetadata}
-            isLoading={isLoading}
-            setIsLoading={setIsLoading}
           />
         </TabsContent>
         
