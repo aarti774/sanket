@@ -12,23 +12,23 @@ export type Database = {
       lessons: {
         Row: {
           content: string | null
-          "lesson-id": number
+          id: string | null
+          "lesson-id": string
           "lesson-name": string
-          "user-id": number
           "video-URL": string | null
         }
         Insert: {
           content?: string | null
-          "lesson-id"?: number
+          id?: string | null
+          "lesson-id"?: string
           "lesson-name": string
-          "user-id": number
           "video-URL"?: string | null
         }
         Update: {
           content?: string | null
-          "lesson-id"?: number
+          id?: string | null
+          "lesson-id"?: string
           "lesson-name"?: string
-          "user-id"?: number
           "video-URL"?: string | null
         }
         Relationships: []
@@ -56,66 +56,33 @@ export type Database = {
       }
       quiz: {
         Row: {
+          id: string
           questions: string | null
           "quiz-id": number
           "quiz-name": string
           score: number | null
         }
         Insert: {
+          id: string
           questions?: string | null
           "quiz-id"?: number
           "quiz-name": string
           score?: number | null
         }
         Update: {
+          id?: string
           questions?: string | null
           "quiz-id"?: number
           "quiz-name"?: string
           score?: number | null
         }
-        Relationships: []
-      }
-      signin: {
-        Row: {
-          password: string | null
-          userid: number
-        }
-        Insert: {
-          password?: string | null
-          userid: number
-        }
-        Update: {
-          password?: string | null
-          userid?: number
-        }
-        Relationships: []
-      }
-      user: {
-        Row: {
-          email: string
-          name: string | null
-          password: string | null
-          "user-id": number
-        }
-        Insert: {
-          email: string
-          name?: string | null
-          password?: string | null
-          "user-id"?: number
-        }
-        Update: {
-          email?: string
-          name?: string | null
-          password?: string | null
-          "user-id"?: number
-        }
         Relationships: [
           {
-            foreignKeyName: "user_user-id_fkey"
-            columns: ["user-id"]
-            isOneToOne: true
-            referencedRelation: "lessons"
-            referencedColumns: ["user-id"]
+            foreignKeyName: "quiz_id_fkey"
+            columns: ["id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -125,21 +92,21 @@ export type Database = {
           activity_type: string
           created_at: string
           id: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           activity_details?: Json | null
           activity_type: string
           created_at?: string
           id?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           activity_details?: Json | null
           activity_type?: string
           created_at?: string
           id?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }

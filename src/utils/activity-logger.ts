@@ -21,13 +21,20 @@ export const logUserActivity = async (
   details?: ActivityDetails
 ): Promise<void> => {
   try {
-    const { error } = await supabase.rpc(
-      'log_user_activity',
-      { 
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !userData.user) {
+      console.error('Error getting current user:', userError);
+      return;
+    }
+    
+    const { error } = await supabase
+      .from('user_activity')
+      .insert({
         activity_type: activityType,
-        activity_details: details ? details : null
-      }
-    );
+        activity_details: details || null,
+        user_id: userData.user.id
+      });
     
     if (error) {
       console.error('Error logging activity:', error);
