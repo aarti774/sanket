@@ -102,15 +102,37 @@ const ProgressTab: React.FC<ProgressTabProps> = ({
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span>Quizzes Completed</span>
-                  <span>0 of {quizzes.length}</span>
+                  <span>{quizzes.length} of {quizzes.length}</span>
                 </div>
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-primary" 
-                    style={{ width: "0%" }}
+                    style={{ width: `${quizzes.length > 0 ? 100 : 0}%` }}
                   ></div>
                 </div>
-                <p className="text-sm text-gray-500 mt-2">Complete quizzes to track your performance</p>
+                {quizzes.length > 0 ? (
+                  <div className="mt-4 space-y-2">
+                    <h4 className="text-sm font-medium">Your Quiz Results:</h4>
+                    <ul className="space-y-2">
+                      {quizzes.map((quiz, index) => (
+                        <li key={index} className="text-sm">
+                          <div className="flex justify-between">
+                            <span>{quiz['quiz-name']}</span>
+                            <span className="font-medium">{quiz.score}%</span>
+                          </div>
+                          <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden mt-1">
+                            <div 
+                              className="h-full bg-primary" 
+                              style={{ width: `${quiz.score}%` }}
+                            ></div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 mt-2">Complete quizzes to track your performance</p>
+                )}
               </div>
             </div>
           </div>
