@@ -33,23 +33,27 @@ export const logUserActivity = async (
   details?: ActivityDetails
 ): Promise<void> => {
   try {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     
-    if (userError || !userData.user) {
-      console.error('Error getting current user:', userError);
+    if (!user) {
+      console.error('No authenticated user found');
       return;
     }
+    
+    console.log('Logging activity for user:', user.id, 'Type:', activityType);
     
     const { error } = await supabase
       .from('user_activity')
       .insert({
         activity_type: activityType,
         activity_details: details || null,
-        user_id: userData.user.id
+        user_id: user.id
       });
     
     if (error) {
       console.error('Error logging activity:', error);
+    } else {
+      console.log('Activity logged successfully');
     }
   } catch (error) {
     console.error('Failed to log activity:', error);

@@ -7,7 +7,7 @@ import { Play } from "lucide-react";
 import { quizzes } from "@/data/quizzes";
 import QuizViewer from "@/components/QuizViewer";
 import { toast } from "sonner";
-import { logUserActivity } from "@/utils/activity-logger";
+import { logUserActivity, getCurrentUser } from "@/utils/activity-logger";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -25,6 +25,8 @@ const Quizzes = () => {
 
   const handleQuizComplete = async (score: number) => {
     if (selectedQuiz.quiz && user) {
+      console.log('Saving quiz result for user:', user.id);
+      
       // Log quiz completion activity
       await logUserActivity('quiz_completion', {
         quiz_id: selectedQuiz.quiz.id,
@@ -38,7 +40,7 @@ const Quizzes = () => {
         const { error } = await supabase
           .from('quiz')
           .upsert({
-            id: user.id,
+            id: crypto.randomUUID(), // Generate a unique ID for the quiz entry
             'quiz-id': parseInt(selectedQuiz.quiz.id),
             'quiz-name': selectedQuiz.quiz.title,
             'score': score,
@@ -48,10 +50,16 @@ const Quizzes = () => {
           
         if (error) {
           console.error('Error saving quiz result:', error);
+          toast.error('Failed to save quiz result');
+        } else {
+          console.log('Quiz result saved successfully');
         }
       } catch (error) {
         console.error('Failed to save quiz result:', error);
+        toast.error('An error occurred while saving your quiz result');
       }
+    } else {
+      console.error('Cannot save quiz: No user or quiz data available');
     }
     
     toast.success(`Quiz completed with score: ${score}%`);

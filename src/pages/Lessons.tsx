@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import {
   Tabs,
@@ -92,6 +93,8 @@ const Lessons = () => {
       return;
     }
     
+    console.log('Saving lesson for user:', user.id);
+    
     // Log lesson view activity
     await logUserActivity('lesson_view', {
       lesson_id: lesson.id,
@@ -101,21 +104,30 @@ const Lessons = () => {
     
     // Save lesson to the database
     try {
+      const lessonData = {
+        id: crypto.randomUUID(), // Generate a unique ID for the lesson entry
+        'lesson-id': lesson.id,
+        'lesson-name': lesson.title,
+        'content': lesson.description,
+        'video-URL': lesson.videoUrl,
+        'user_id': user.id
+      };
+      
+      console.log('Saving lesson data:', lessonData);
+      
       const { error } = await supabase
         .from('lessons')
-        .upsert({
-          'lesson-id': lesson.id,
-          'lesson-name': lesson.title,
-          'content': lesson.description,
-          'video-URL': lesson.videoUrl,
-          'user_id': user.id
-        });
+        .upsert(lessonData);
         
       if (error) {
         console.error('Error saving lesson:', error);
+        toast.error('Failed to save lesson');
+      } else {
+        console.log('Lesson saved successfully');
       }
     } catch (error) {
       console.error('Failed to save lesson:', error);
+      toast.error('An error occurred while saving your lesson progress');
     }
     
     setLessonViewer({
