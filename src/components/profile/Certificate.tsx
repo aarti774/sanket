@@ -97,9 +97,10 @@ const Certificate: React.FC<CertificateProps> = ({
         )}
       </div>
       
+      {/* Hidden certificate for PDF generation - optimized for minimal rendering impact */}
       <div 
         ref={certificateRef} 
-        className="hidden p-8 bg-white border border-gray-200 rounded-lg" 
+        className="hidden" 
         style={{ width: '800px', height: '600px' }}
       >
         <CertificateTemplate 
