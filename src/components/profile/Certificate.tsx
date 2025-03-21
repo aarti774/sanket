@@ -2,9 +2,9 @@
 import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Award, Download } from "lucide-react";
-import { toast } from "sonner";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import CertificateTemplate from "./CertificateTemplate";
+import CertificateProgress from "./CertificateProgress";
+import { downloadCertificateAsPDF } from "@/utils/certificateUtils";
 
 interface CertificateProps {
   cert: {
@@ -37,65 +37,10 @@ const Certificate: React.FC<CertificateProps> = ({
   const certificateRef = useRef<HTMLDivElement>(null);
 
   const handleDownloadCertificate = async () => {
-    const certificateElement = certificateRef.current;
-    if (!certificateElement) {
-      toast.error("Certificate element not found");
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      toast.info("Generating certificate...", { duration: 3000 });
-      
-      // Make certificate visible temporarily for capture with less overhead
-      certificateElement.style.display = "block";
-      certificateElement.style.position = "fixed";
-      certificateElement.style.top = "0";
-      certificateElement.style.left = "0";
-      certificateElement.style.zIndex = "-1000";
-      
-      // Reduced delay for faster execution
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      const canvas = await html2canvas(certificateElement, {
-        scale: 1.5, // Reduced scale for faster rendering
-        logging: false, // Disable logging for better performance
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        allowTaint: true,
-        foreignObjectRendering: false,
-      });
-      
-      // Hide the certificate element again
-      certificateElement.style.display = "none";
-      certificateElement.style.position = "";
-      certificateElement.style.zIndex = "";
-      
-      // Use lower quality JPEG for faster processing
-      const imgData = canvas.toDataURL('image/jpeg', 0.8);
-      
-      // Create PDF with appropriate dimensions
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a4'
-      });
-      
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-      
-      const fileName = `${personalInfo.fullName.replace(/\s+/g, '_')}_${cert.name.replace(/\s+/g, '_')}.pdf`;
-      pdf.save(fileName);
-      
-      toast.success("Certificate downloaded successfully");
-    } catch (error) {
-      toast.error("Failed to download certificate");
-      console.error("Certificate download error:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    if (!certificateRef.current) return;
+    
+    const fileName = `${personalInfo.fullName.replace(/\s+/g, '_')}_${cert.name.replace(/\s+/g, '_')}.pdf`;
+    await downloadCertificateAsPDF(certificateRef.current, fileName, setIsLoading);
   };
 
   return (
@@ -120,18 +65,7 @@ const Certificate: React.FC<CertificateProps> = ({
           )}
         </div>
         
-        <div className="mt-3 space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>Progress</span>
-            <span>{cert.progress}%</span>
-          </div>
-          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-primary" 
-              style={{ width: `${cert.progress}%` }}
-            ></div>
-          </div>
-        </div>
+        <CertificateProgress progress={cert.progress} />
         
         <div className="mt-4 space-y-2">
           <h4 className="text-sm font-medium">Achievements:</h4>
@@ -168,41 +102,12 @@ const Certificate: React.FC<CertificateProps> = ({
         className="hidden p-8 bg-white border border-gray-200 rounded-lg" 
         style={{ width: '800px', height: '600px' }}
       >
-        {/* Using a simpler certificate layout for faster rendering */}
-        <div className="w-full h-full flex flex-col items-center justify-between p-6 border-8 border-double border-primary/20">
-          <div className="text-center w-full">
-            <h2 className="text-3xl font-bold text-primary mb-1">Certificate of Achievement</h2>
-            <h3 className="text-xl font-semibold mb-6">{cert.name}</h3>
-            <div className="flex justify-center mb-6">
-              <Award className="h-20 w-20 text-primary" />
-            </div>
-            <p className="text-lg mb-2">This certifies that</p>
-            <h2 className="text-2xl font-bold mb-2">{personalInfo.fullName || userMetadata.full_name || user.email}</h2>
-            <p className="text-lg">has successfully completed the {cert.name} course</p>
-            <p className="text-lg mt-4">with the following achievements:</p>
-            <ul className="my-4 inline-block text-left">
-              {cert.achievements.map((achievement, idx) => (
-                <li key={idx} className="text-base mb-1">• {achievement}</li>
-              ))}
-            </ul>
-          </div>
-          
-          <div className="mt-8 w-full">
-            <div className="grid grid-cols-2 gap-8">
-              <div className="text-center">
-                <div className="border-t border-gray-400 pt-2 mx-auto w-40">
-                  <p className="text-sm">Date: {new Date(cert.date).toLocaleDateString()}</p>
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="border-t border-gray-400 pt-2 mx-auto w-40">
-                  <p className="text-sm">Instructor Signature</p>
-                </div>
-              </div>
-            </div>
-            <p className="text-sm text-center mt-6 text-gray-500">Sanket - Sign Language Learning Platform</p>
-          </div>
-        </div>
+        <CertificateTemplate 
+          cert={cert}
+          personalInfo={personalInfo}
+          user={user}
+          userMetadata={userMetadata}
+        />
       </div>
     </div>
   );
