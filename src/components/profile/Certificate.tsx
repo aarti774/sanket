@@ -45,14 +45,34 @@ const Certificate: React.FC<CertificateProps> = ({
 
     try {
       setIsLoading(true);
+      
+      // Make certificate visible temporarily for capture
+      certificateElement.style.display = "block";
+      certificateElement.style.position = "fixed";
+      certificateElement.style.top = "0";
+      certificateElement.style.left = "0";
+      certificateElement.style.zIndex = "-1000";
+      
+      // Add a small delay to ensure rendering is complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       const canvas = await html2canvas(certificateElement, {
         scale: 2,
-        logging: false,
+        logging: true,
         useCORS: true,
-        backgroundColor: "#ffffff"
+        backgroundColor: "#ffffff",
+        allowTaint: true,
+        foreignObjectRendering: false,
       });
       
-      const imgData = canvas.toDataURL('image/png');
+      // Hide the certificate element again
+      certificateElement.style.display = "none";
+      certificateElement.style.position = "";
+      certificateElement.style.zIndex = "";
+      
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      
+      // Create PDF with appropriate dimensions
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
@@ -62,7 +82,7 @@ const Certificate: React.FC<CertificateProps> = ({
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
       
       pdf.save(`${personalInfo.fullName.replace(/\s+/g, '_')}_${cert.name.replace(/\s+/g, '_')}.pdf`);
       
