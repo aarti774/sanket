@@ -60,6 +60,7 @@ export type Database = {
       quiz: {
         Row: {
           id: string
+          "lesson-id": string | null
           questions: string | null
           "quiz-id": number
           "quiz-name": string
@@ -68,6 +69,7 @@ export type Database = {
         }
         Insert: {
           id: string
+          "lesson-id"?: string | null
           questions?: string | null
           "quiz-id"?: number
           "quiz-name": string
@@ -76,6 +78,7 @@ export type Database = {
         }
         Update: {
           id?: string
+          "lesson-id"?: string | null
           questions?: string | null
           "quiz-id"?: number
           "quiz-name"?: string

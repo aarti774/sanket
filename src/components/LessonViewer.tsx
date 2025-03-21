@@ -35,41 +35,52 @@ const LessonViewer = ({
       setLoading(true);
       setVideoError(false);
       
+      console.log('Loading video with URL:', videoUrl);
+      
       try {
         if (videoUrl.startsWith('http') || videoUrl.startsWith('/')) {
           // Direct URL or local path, use as is
+          console.log('Using direct URL:', videoUrl);
           setActualVideoUrl(videoUrl);
         } else if (videoUrl.startsWith('videos/')) {
           // It's a reference to a file in Supabase storage
+          console.log('Loading from Supabase (videos/ format):', videoUrl);
+          const filePath = videoUrl.replace('videos/', '');
+          console.log('Extracted file path:', filePath);
+          
           const { data, error } = await supabase.storage
             .from('videos')
-            .createSignedUrl(videoUrl.replace('videos/', ''), 3600); // 1 hour expiry
+            .createSignedUrl(filePath, 3600); // 1 hour expiry
           
           if (error) {
             console.error('Error loading video from Supabase:', error);
-            toast.error('Failed to load video');
+            toast.error(`Failed to load video: ${error.message}`);
             setVideoError(true);
           } else if (data) {
+            console.log('Signed URL created successfully:', data.signedUrl);
             setActualVideoUrl(data.signedUrl);
           }
         } else {
           // Assume it's a direct reference to a video in the videos bucket
+          console.log('Loading from Supabase (direct path):', videoUrl);
+          
           const { data, error } = await supabase.storage
             .from('videos')
             .createSignedUrl(videoUrl, 3600); // 1 hour expiry
           
           if (error) {
             console.error('Error loading video from Supabase:', error);
-            toast.error('Failed to load video');
+            toast.error(`Failed to load video: ${error.message}`);
             setVideoError(true);
           } else if (data) {
+            console.log('Signed URL created successfully:', data.signedUrl);
             setActualVideoUrl(data.signedUrl);
           }
         }
       } catch (error) {
         console.error('Error processing video URL:', error);
-        setVideoError(true);
         toast.error('Error loading video');
+        setVideoError(true);
       } finally {
         setLoading(false);
       }
