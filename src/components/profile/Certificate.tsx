@@ -45,20 +45,21 @@ const Certificate: React.FC<CertificateProps> = ({
 
     try {
       setIsLoading(true);
+      toast.info("Generating certificate...", { duration: 3000 });
       
-      // Make certificate visible temporarily for capture
+      // Make certificate visible temporarily for capture with less overhead
       certificateElement.style.display = "block";
       certificateElement.style.position = "fixed";
       certificateElement.style.top = "0";
       certificateElement.style.left = "0";
       certificateElement.style.zIndex = "-1000";
       
-      // Add a small delay to ensure rendering is complete
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Reduced delay for faster execution
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       const canvas = await html2canvas(certificateElement, {
-        scale: 2,
-        logging: true,
+        scale: 1.5, // Reduced scale for faster rendering
+        logging: false, // Disable logging for better performance
         useCORS: true,
         backgroundColor: "#ffffff",
         allowTaint: true,
@@ -70,7 +71,8 @@ const Certificate: React.FC<CertificateProps> = ({
       certificateElement.style.position = "";
       certificateElement.style.zIndex = "";
       
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      // Use lower quality JPEG for faster processing
+      const imgData = canvas.toDataURL('image/jpeg', 0.8);
       
       // Create PDF with appropriate dimensions
       const pdf = new jsPDF({
@@ -84,7 +86,8 @@ const Certificate: React.FC<CertificateProps> = ({
       
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
       
-      pdf.save(`${personalInfo.fullName.replace(/\s+/g, '_')}_${cert.name.replace(/\s+/g, '_')}.pdf`);
+      const fileName = `${personalInfo.fullName.replace(/\s+/g, '_')}_${cert.name.replace(/\s+/g, '_')}.pdf`;
+      pdf.save(fileName);
       
       toast.success("Certificate downloaded successfully");
     } catch (error) {
@@ -154,7 +157,7 @@ const Certificate: React.FC<CertificateProps> = ({
               disabled={isLoading}
             >
               <Download size={16} />
-              Download Certificate
+              {isLoading ? "Generating..." : "Download Certificate"}
             </Button>
           </div>
         )}
@@ -165,6 +168,7 @@ const Certificate: React.FC<CertificateProps> = ({
         className="hidden p-8 bg-white border border-gray-200 rounded-lg" 
         style={{ width: '800px', height: '600px' }}
       >
+        {/* Using a simpler certificate layout for faster rendering */}
         <div className="w-full h-full flex flex-col items-center justify-between p-6 border-8 border-double border-primary/20">
           <div className="text-center w-full">
             <h2 className="text-3xl font-bold text-primary mb-1">Certificate of Achievement</h2>
